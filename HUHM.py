@@ -73,12 +73,11 @@ def animate(frame_count, compressao_harmonica_percent, activation_radius):
 
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(16, 12))
     
-    # --- NOVO: Título Geral da Figura ---
     fig.suptitle("HIPÓTESE UNIVERSAL DA MANIFESTAÇÃO HARMÔNICA - HUMH", fontsize=20, fontweight='bold')
 
     # Configuração do grid visual
     img = ax1.imshow(grid, cmap=cmap_custom, vmin=0, vmax=1, aspect='equal', origin='lower')
-    ax1.set_title(f"Percepção do Observador (Raio: {activation_radius})")
+    # O título agora será definido dentro do loop para ser dinâmico
 
     # Setup do gráfico de energia
     plot_total, = ax2.plot([], [], lw=2.5, color='gray', alpha=0.7, label="Energia Total (Realista)")
@@ -139,9 +138,14 @@ def animate(frame_count, compressao_harmonica_percent, activation_radius):
         proporcao_timeline.append(p)
         estado_timeline.append(estado_atual)
 
+        # --- ATUALIZAÇÃO DOS GRÁFICOS ---
         img.set_data(grid)
         for patch in reversed(ax1.patches):
             patch.remove()
+
+        # --- ALTERAÇÃO AQUI ---
+        # Define o título da grade dinamicamente a cada iteração
+        ax1.set_title(f"Iteração: {i+1}/{frame_count} | Raio: {activation_radius}")
 
         circ = plt.Circle((y, x), radius=activation_radius, edgecolor='red', facecolor='none', lw=1.5, alpha=0.7)
         ax1.add_patch(circ)
@@ -157,8 +161,7 @@ def animate(frame_count, compressao_harmonica_percent, activation_radius):
         plot_eh.set_data(range(len(entropia_harmonica_timeline)), entropia_harmonica_timeline)
         plot_prop.set_data(range(len(proporcao_timeline)), proporcao_timeline)
 
-        # Ajusta o layout para acomodar o título geral
-        fig.tight_layout(rect=[0, 0, 1, 0.96]) # <-- ALTERADO
+        fig.tight_layout(rect=[0, 0, 1, 0.96])
         
         clear_output(wait=True)
         display(fig)
