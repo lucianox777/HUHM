@@ -8,10 +8,10 @@ import ipywidgets as widgets
 import seaborn as sns
 import pandas as pd
 
-# --- PARÂMETROS FIXOS DA SIMULAÇÃO ---
+# --- PARÂMETROS DA SIMULAÇÃO ---
 GRID_SIZE = 30
-ACTIVATION_RADIUS = 4
-FRAME_COUNT_DEFAULT = 225  # Valor inicial para o slider
+FRAME_COUNT_DEFAULT = 225
+RADIUS_DEFAULT = 4
 
 # --- SETUP INICIAL ---
 sns.set(style="whitegrid")
@@ -60,7 +60,7 @@ def compute_manifestation_cost(grid_before, x, y, radius):
     newly_activated_count = sum(1 for nx, ny in activated_region if grid_before[nx, ny] == 0)
     return newly_activated_count / grid_before.size
 
-def animate(frame_count, compressao_harmonica_percent):
+def animate(frame_count, compressao_harmonica_percent, activation_radius):
     """Executa a animação e os cálculos com Entropia Harmônica."""
     grid = grid_inicial.copy()
 
@@ -72,10 +72,13 @@ def animate(frame_count, compressao_harmonica_percent):
     estado_timeline = []
 
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(16, 12))
+    
+    # --- NOVO: Título Geral da Figura ---
+    fig.suptitle("HIPÓTESE UNIVERSAL DA MANIFESTAÇÃO HARMÔNICA - HUMH", fontsize=20, fontweight='bold')
 
     # Configuração do grid visual
     img = ax1.imshow(grid, cmap=cmap_custom, vmin=0, vmax=1, aspect='equal', origin='lower')
-    ax1.set_title("Percepção do Observador no Universo Derivado")
+    ax1.set_title(f"Percepção do Observador (Raio: {activation_radius})")
 
     # Setup do gráfico de energia
     plot_total, = ax2.plot([], [], lw=2.5, color='gray', alpha=0.7, label="Energia Total (Realista)")
@@ -117,49 +120,46 @@ def animate(frame_count, compressao_harmonica_percent):
         y = int((np.cos(i / 20) + 1) / 2 * GRID_SIZE)
 
         grid_before = grid.copy()
-        grid = activate(grid, x, y, ACTIVATION_RADIUS)
+        grid = activate(grid, x, y, activation_radius)
 
-        # --- CÁLCULOS DE ENERGIA ---
         total_ratio = np.count_nonzero(grid > 0) / grid.size * 100
         energia_total_acumulada.append(total_ratio)
 
-        manifestation_cost = compute_manifestation_cost(grid_before, x, y, ACTIVATION_RADIUS) * 100
+        manifestation_cost = compute_manifestation_cost(grid_before, x, y, activation_radius) * 100
         custo_bruto_manifestacao.append(manifestation_cost)
 
         fator_compressao = 1 - (compressao_harmonica_percent / 100)
         parsimonious_energy = manifestation_cost * fator_compressao
         energia_parcimoniosa_final.append(parsimonious_energy)
 
-        # --- CÁLCULOS DE ENTROPIA HARMÔNICA ---
         EH, p = compute_harmonic_entropy(grid)
         estado_atual = classify_harmonic_state(EH, p)
-
+        
         entropia_harmonica_timeline.append(EH)
         proporcao_timeline.append(p)
         estado_timeline.append(estado_atual)
 
-        # --- ATUALIZAÇÃO DOS GRÁFICOS ---
         img.set_data(grid)
         for patch in reversed(ax1.patches):
             patch.remove()
 
-        circ = plt.Circle((y, x), radius=ACTIVATION_RADIUS, edgecolor='red', facecolor='none', lw=1.5, alpha=0.7)
+        circ = plt.Circle((y, x), radius=activation_radius, edgecolor='red', facecolor='none', lw=1.5, alpha=0.7)
         ax1.add_patch(circ)
-
-        # Adicionar texto do estado atual
-        ax1.text(0.02, 0.98, f"Estado: {estado_atual}", transform=ax1.transAxes,
+        
+        ax1.text(0.02, 0.98, f"Estado: {estado_atual}", transform=ax1.transAxes, 
                  bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.8),
                  verticalalignment='top', fontsize=10, fontweight='bold')
 
-        # Atualizar gráficos
         plot_total.set_data(range(len(energia_total_acumulada)), energia_total_acumulada)
         plot_bruto.set_data(range(len(custo_bruto_manifestacao)), custo_bruto_manifestacao)
         plot_parcimoniosa.set_data(range(len(energia_parcimoniosa_final)), energia_parcimoniosa_final)
-
+        
         plot_eh.set_data(range(len(entropia_harmonica_timeline)), entropia_harmonica_timeline)
         plot_prop.set_data(range(len(proporcao_timeline)), proporcao_timeline)
 
-        fig.tight_layout()
+        # Ajusta o layout para acomodar o título geral
+        fig.tight_layout(rect=[0, 0, 1, 0.96]) # <-- ALTERADO
+        
         clear_output(wait=True)
         display(fig)
         plt.pause(0.05)
@@ -170,17 +170,14 @@ def animate(frame_count, compressao_harmonica_percent):
 
     plt.close(fig)
 
-    # --- ANÁLISE FINAL EXPANDIDA ---
-    # (Opcional: Pode adicionar um gráfico de resumo final aqui se desejar)
-
-    # Relatório textual final
+    # (O código para o relatório final continua o mesmo)
     EH_inicial, p_inicial = compute_harmonic_entropy(grid_inicial)
     EH_final, p_final = compute_harmonic_entropy(grid)
     media_parcimonia_final = np.mean(energia_parcimoniosa_final)
     media_custo_bruto = np.mean(custo_bruto_manifestacao)
 
     print(f"\n{'='*60}")
-    print("RELATÓRIO FINAL - VALIDAÇÃO COMPUTACIONAL HUMH")
+    print(f"RELATÓRIO FINAL - VALIDAÇÃO COMPUTACIONAL (Raio: {activation_radius})")
     print(f"{'='*60}")
     print(f"Compressão Harmônica aplicada: {compressao_harmonica_percent}%")
     print(f"Frames simulados: {len(entropia_harmonica_timeline)}")
@@ -189,42 +186,40 @@ def animate(frame_count, compressao_harmonica_percent):
     print(f"• EH final: {EH_final:.4f} (p = {p_final:.3f}) - {classify_harmonic_state(EH_final, p_final)}")
     if EH_inicial > 0:
         print(f"• Redução da Entropia Harmônica: {((EH_inicial - EH_final)/EH_inicial*100):.1f}%")
-
+    
     if p_final > 0.9:
         print(f"\n✓ VALIDAÇÃO: Sistema evoluiu para Harmonia Plena conforme previsto pela HUMH")
     else:
         print(f"\nOBSERVAÇÃO: Sistema em trânsito para a Harmonia Plena.")
-
+    
     print(f"\nEFICIÊNCIA ENERGÉTICA:")
     print(f"• Modelo Realista (energia total): {energia_total_acumulada[-1]:.1f}%")
     print(f"• Parcimônia Pura (custo bruto médio): {media_custo_bruto:.3f}%")
     print(f"• HUMH Completa (energia final média): {media_parcimonia_final:.3f}%")
     if media_custo_bruto > 0:
       print(f"• Economia da HUMH (Compressão): {((media_custo_bruto - media_parcimonia_final)/media_custo_bruto*100):.1f}%")
-
+    
     print(f"\n{'='*60}")
 
-# --- INTERFACE INTERATIVA ATUALIZADA ---
+# --- INTERFACE INTERATIVA FINAL ---
 frame_slider = widgets.IntSlider(value=FRAME_COUNT_DEFAULT, min=10, max=1000, step=10, description="Nº de Frames:")
 compression_slider = widgets.FloatSlider(value=70.0, min=0.0, max=100.0, step=1.0, description="Compressão Harmônica (%):")
+radius_slider = widgets.IntSlider(value=RADIUS_DEFAULT, min=1, max=10, step=1, description="Raio de Ativação:")
 start_button = widgets.Button(description="▶ Iniciar Simulação HUMH", button_style='success')
 
 info_text = widgets.HTML(value="""
 <div style='background-color: #f0f8ff; padding: 10px; border-radius: 5px; margin: 10px 0;'>
-<h3 style='color: #4169e1; margin-top: 0;'>🔬 SIMULAÇÃO HUMH - ENTROPIA HARMÔNICA</h3>
+<h3 style='color: #4169e1; margin-top: 0;'>🔬 SIMULAÇÃO HUMH</h3>
 <p>Esta simulação valida os princípios da HUMH, mostrando a evolução de um universo derivado sob a percepção de um Observador.</p>
-<ul>
-<li><b>Entropia Harmônica (EH):</b> Mede a distância da uniformidade. EH=0 é harmonia perfeita, EH=1 é caos máximo.</li>
-<li><b>Parcimônia Energética:</b> Comparação entre o custo de manter tudo ativo (realista) vs. o custo de manifestar apenas o necessário (HUMH).</li>
-</ul>
 </div>
 """)
 
 def on_button_click(b):
     clear_output(wait=True)
     display(ui)
-    animate(frame_slider.value, compression_slider.value)
+    animate(frame_slider.value, compression_slider.value, radius_slider.value)
 
 start_button.on_click(on_button_click)
-ui = widgets.VBox([info_text, frame_slider, compression_slider, start_button])
+
+ui = widgets.VBox([info_text, frame_slider, compression_slider, radius_slider, start_button])
 display(ui)
