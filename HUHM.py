@@ -213,7 +213,7 @@ start_button = widgets.Button(description="▶ Iniciar Simulação HUMH", button
 info_text = widgets.HTML(value="""
 <div style='background-color: #f0f8ff; padding: 10px; border-radius: 5px; margin: 10px 0;'>
 <h3 style='color: #4169e1; margin-top: 0;'>🔬 SIMULAÇÃO HUMH</h3>
-<p>Esta simulação valida os princípios da HUMH, mostrando a evolução de um universo derivado sob a percepção de um Observador.</p>
+<p style="color: #000000;">Esta simulação valida os princípios da HUMH, mostrando a evolução de um universo derivado sob a percepção de um Observador.</p>
 </div>
 """)
 
